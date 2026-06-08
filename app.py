@@ -4,6 +4,7 @@ from flask_login import LoginManager, UserMixin, login_user, logout_user, login_
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, date, timedelta
 from functools import wraps
+from sqlalchemy import extract
 import csv
 import io
 import os
@@ -558,12 +559,19 @@ def reports():
     overdue_borrows = [b for b in Borrow.query.filter_by(status='borrowed').all() if b.is_overdue]
     # monthly borrow stats (last 6 months)
     monthly = []
-    for i in range(5, -1, -1):
-        d = date.today().replace(day=1) - timedelta(days=i * 30)
-        cnt = Borrow.query.filter(
-            db.func.strftime('%Y-%m', Borrow.borrow_date) == d.strftime('%Y-%m')
-        ).count()
-        monthly.append({'month': d.strftime('%b %Y'), 'count': cnt})
+    
+  for i in range(5, -1, -1):
+    d = date.today().replace(day=1) - timedelta(days=i * 30)
+
+    cnt = Borrow.query.filter(
+        extract('year', Borrow.borrow_date) == d.year,
+        extract('month', Borrow.borrow_date) == d.month
+    ).count()
+
+    monthly.append({
+        'month': d.strftime('%b %Y'),
+        'count': cnt
+    })
     # category stats
     cat_stats = db.session.query(Book.category, db.func.count(Book.id))\
         .group_by(Book.category).all()
