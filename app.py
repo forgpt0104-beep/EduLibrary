@@ -552,37 +552,55 @@ def pay_all_fines():
 @app.route('/reports')
 @login_required
 def reports():
-    top_books = db.session.query(Book, db.func.count(Borrow.id).label('cnt'))\
-        .join(Borrow).group_by(Book.id).order_by(db.text('cnt DESC')).limit(10).all()
-    top_students = db.session.query(Student, db.func.count(Borrow.id).label('cnt'))\
-        .join(Borrow).group_by(Student.id).order_by(db.text('cnt DESC')).limit(10).all()
-    overdue_borrows = [b for b in Borrow.query.filter_by(status='borrowed').all() if b.is_overdue]
-    # monthly borrow stats (last 6 months)
+    top_books = db.session.query(
+        Book,
+        db.func.count(Borrow.id).label('cnt')
+    ).join(Borrow).group_by(Book.id).order_by(
+        db.text('cnt DESC')
+    ).limit(10).all()
+
+    top_students = db.session.query(
+        Student,
+        db.func.count(Borrow.id).label('cnt')
+    ).join(Borrow).group_by(Student.id).order_by(
+        db.text('cnt DESC')
+    ).limit(10).all()
+
+    overdue_borrows = [
+        b for b in Borrow.query.filter_by(status='borrowed').all()
+        if b.is_overdue
+    ]
+
+    # Monthly borrow stats (last 6 months)
     monthly = []
-    
-  for i in range(5, -1, -1):
-    d = date.today().replace(day=1) - timedelta(days=i * 30)
 
-    cnt = Borrow.query.filter(
-        extract('year', Borrow.borrow_date) == d.year,
-        extract('month', Borrow.borrow_date) == d.month
-    ).count()
+    for i in range(5, -1, -1):
+        d = date.today().replace(day=1) - timedelta(days=i * 30)
 
-    monthly.append({
-        'month': d.strftime('%b %Y'),
-        'count': cnt
-    })
-    # category stats
-    cat_stats = db.session.query(Book.category, db.func.count(Book.id))\
-        .group_by(Book.category).all()
-    return render_template('reports.html',
+        cnt = Borrow.query.filter(
+            extract('year', Borrow.borrow_date) == d.year,
+            extract('month', Borrow.borrow_date) == d.month
+        ).count()
+
+        monthly.append({
+            'month': d.strftime('%b %Y'),
+            'count': cnt
+        })
+
+    # Category stats
+    cat_stats = db.session.query(
+        Book.category,
+        db.func.count(Book.id)
+    ).group_by(Book.category).all()
+
+    return render_template(
+        'reports.html',
         top_books=top_books,
         top_students=top_students,
         overdue_borrows=overdue_borrows,
         monthly=monthly,
         cat_stats=cat_stats,
     )
-
 
 # ───────────────────────────── USERS (admin) ─────────────────────────────
 
