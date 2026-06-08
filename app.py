@@ -43,7 +43,10 @@ class User(UserMixin, db.Model):
 
     @property
     def display_name(self):
-        return self.full_name or self.username
+        try:
+            return self.full_name or self.username
+        except Exception:
+            return self.username
 
 
 class Student(db.Model):
@@ -158,12 +161,20 @@ def login():
         username = request.form.get('username', '').strip()
         password = request.form.get('password', '')
         user = User.query.filter_by(username=username).first()
-        if user and user.check_password(password) and user.is_active:
-            user.last_login = datetime.utcnow()
-            db.session.commit()
-            login_user(user)
-            return redirect(url_for('dashboard'))
-        flash("Login yoki parol noto'g'ri!", 'danger')
+        if user and user.check_password(password):
+            # is_active may be NULL on migrated rows — treat NULL as active
+            if getattr(user, 'is_active', True) is False:
+                flash("Hisobingiz bloklangan!", 'danger')
+            else:
+                try:
+                    user.last_login = datetime.utcnow()
+                    db.session.commit()
+                except Exception:
+                    db.session.rollback()
+                login_user(user)
+                return redirect(url_for('dashboard'))
+        else:
+            flash("Login yoki parol noto'g'ri!", 'danger')
     return render_template('login.html')
 
 
@@ -694,59 +705,60 @@ def export_books():
     )
 
 
-# ───────────────────────────── MIGRATE DB ─────────────────────────────
+# ───────────────────────────── INIT DB (single context, no nesting) ─────────────────────────────
 
-def migrate_db():
-    """Safely add any missing columns to existing tables (for deployed DB upgrades)."""
+def init_db():
+    """Create tables, migrate missing columns, seed initial data.
+    Called once at module level — safe under both `python app.py` and gunicorn.
+    """
     from sqlalchemy import inspect, text
 
     with app.app_context():
-        inspector = inspect(db.engine)
-        existing_tables = inspector.get_table_names()
+        # 1. Create any brand-new tables
+        db.create_all()
 
-        def add_col_if_missing(table, col, col_type):
+        # 2. Add missing columns to EXISTING tables (for already-deployed databases)
+        insp = inspect(db.engine)
+        existing_tables = insp.get_table_names()
+
+        def _add(table, col, col_type):
+            """ALTER TABLE … ADD COLUMN if the column is absent."""
             if table not in existing_tables:
                 return
-            cols = [c['name'] for c in inspector.get_columns(table)]
-            if col not in cols:
-                with db.engine.connect() as conn:
-                    conn.execute(text(f'ALTER TABLE "{table}" ADD COLUMN {col} {col_type}'))
-                    conn.commit()
+            present = [c['name'] for c in insp.get_columns(table)]
+            if col not in present:
+                try:
+                    with db.engine.connect() as conn:
+                        conn.execute(text(
+                            f'ALTER TABLE "{table}" ADD COLUMN {col} {col_type}'
+                        ))
+                        conn.commit()
+                except Exception:
+                    pass  # column already added by a concurrent worker, ignore
 
-        # ── student ──
-        add_col_if_missing('student', 'gender',       'VARCHAR(10)')
-        add_col_if_missing('student', 'email',        'VARCHAR(120)')
-        add_col_if_missing('student', 'date_of_birth','DATE')
-        add_col_if_missing('student', 'address',      'VARCHAR(250)')
-        add_col_if_missing('student', 'parent_name',  'VARCHAR(150)')
-        add_col_if_missing('student', 'parent_phone', 'VARCHAR(20)')
-        add_col_if_missing('student', 'notes',        'TEXT')
-
-        # ── user ──
-        add_col_if_missing('user', 'full_name',  'VARCHAR(150)')
-        add_col_if_missing('user', 'email',      'VARCHAR(120)')
-        add_col_if_missing('user', 'phone',      'VARCHAR(20)')
-        add_col_if_missing('user', 'is_active',  'BOOLEAN DEFAULT 1')
-        add_col_if_missing('user', 'last_login', 'DATETIME')
-        add_col_if_missing('user', 'created_at', 'DATETIME')
-
-        # ── book ──
-        add_col_if_missing('book', 'description',    'TEXT')
-        add_col_if_missing('book', 'publisher',      'VARCHAR(150)')
-        add_col_if_missing('book', 'year',           'INTEGER')
-        add_col_if_missing('book', 'language',       'VARCHAR(50)')
-        add_col_if_missing('book', 'shelf_location', 'VARCHAR(50)')
-
-        # ── borrow ──
-        add_col_if_missing('borrow', 'notes', 'VARCHAR(250)')
-
-
-# ───────────────────────────── INIT DB ─────────────────────────────
-
-def init_db():
-    with app.app_context():
-        db.create_all()
-        migrate_db()
+        # student
+        _add('student', 'gender',        'VARCHAR(10)')
+        _add('student', 'email',         'VARCHAR(120)')
+        _add('student', 'date_of_birth', 'DATE')
+        _add('student', 'address',       'VARCHAR(250)')
+        _add('student', 'parent_name',   'VARCHAR(150)')
+        _add('student', 'parent_phone',  'VARCHAR(20)')
+        _add('student', 'notes',         'TEXT')
+        # user
+        _add('user', 'full_name',  'VARCHAR(150)')
+        _add('user', 'email',      'VARCHAR(120)')
+        _add('user', 'phone',      'VARCHAR(20)')
+        _add('user', 'is_active',  'BOOLEAN DEFAULT 1')
+        _add('user', 'last_login', 'DATETIME')
+        _add('user', 'created_at', 'DATETIME')
+        # book
+        _add('book', 'description',    'TEXT')
+        _add('book', 'publisher',      'VARCHAR(150)')
+        _add('book', 'year',           'INTEGER')
+        _add('book', 'language',       'VARCHAR(50)')
+        _add('book', 'shelf_location', 'VARCHAR(50)')
+        # borrow
+        _add('borrow', 'notes', 'VARCHAR(250)')
 
         if not User.query.filter_by(username='admin').first():
             admin = User(username='admin', role='admin', full_name='Bosh Administrator',
