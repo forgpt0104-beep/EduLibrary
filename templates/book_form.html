@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'Tahrirlash' if book else 'Kitob qo\'shish' }} - EduLibrary{% endblock %}
+{% block page_title %}{{ 'Kitob tahrirlash' if book else 'Yangi kitob' }}{% endblock %}
+{% block content %}
+<div class="card" style="max-width:600px;">
+  <form method="POST">
+    <div class="form-grid">
+      <div class="form-group" style="grid-column:1/-1;">
+        <label>Kitob nomi *</label>
+        <input class="form-control" type="text" name="title" value="{{ book.title if book else '' }}" required>
+      </div>
+      <div class="form-group">
+        <label>Muallif *</label>
+        <input class="form-control" type="text" name="author" value="{{ book.author if book else '' }}" required>
+      </div>
+      <div class="form-group">
+        <label>ISBN</label>
+        <input class="form-control" type="text" name="isbn" value="{{ book.isbn if book else '' }}">
+      </div>
+      <div class="form-group">
+        <label>Kategoriya</label>
+        <select class="form-control" name="category">
+          <option value="">Tanlang</option>
+          {% for cat in ['Adabiyot', 'Matematika', 'Fizika', 'Kimyo', 'Biologiya', 'Tarix', 'Geografiya', 'Til', 'Texnologiya', 'Boshqa'] %}
+          <option value="{{ cat }}" {% if book and book.category == cat %}selected{% endif %}>{{ cat }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      {% if not book %}
+      <div class="form-group">
+        <label>Nusxalar soni</label>
+        <input class="form-control" type="number" name="total_copies" value="1" min="1">
+      </div>
+      {% endif %}
+    </div>
+    <div style="display:flex; gap:10px; margin-top:8px;">
+      <button class="btn btn-primary" type="submit">{{ 'Saqlash' if book else 'Qo\'shish' }}</button>
+      <a href="{{ url_for('books') }}" class="btn btn-secondary">Bekor qilish</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

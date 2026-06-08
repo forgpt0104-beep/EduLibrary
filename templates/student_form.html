@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% block title %}O'quvchi - EduLibrary{% endblock %}
+{% block page_title %}{{ 'O\'quvchi tahrirlash' if student else 'Yangi o\'quvchi' }}{% endblock %}
+{% block content %}
+<div class="card" style="max-width:560px;">
+  <form method="POST">
+    <div class="form-grid">
+      <div class="form-group" style="grid-column:1/-1;">
+        <label>F.I.Sh. (To'liq ism) *</label>
+        <input class="form-control" type="text" name="full_name" value="{{ student.full_name if student else '' }}" placeholder="Aliyev Bobur Mansurovich" required>
+      </div>
+      <div class="form-group">
+        <label>O'quvchi ID *</label>
+        <input class="form-control" type="text" name="student_id" value="{{ student.student_id if student else '' }}" placeholder="S001" required>
+      </div>
+      <div class="form-group">
+        <label>Sinf *</label>
+        <input class="form-control" type="text" name="grade" value="{{ student.grade if student else '' }}" placeholder="9-A" required>
+      </div>
+      <div class="form-group">
+        <label>Telefon raqami</label>
+        <input class="form-control" type="text" name="phone" value="{{ student.phone if student else '' }}" placeholder="+998901234567">
+      </div>
+    </div>
+    <div style="display:flex; gap:10px; margin-top:8px;">
+      <button class="btn btn-primary" type="submit">{{ 'Saqlash' if student else 'Qo\'shish' }}</button>
+      <a href="{{ url_for('students') }}" class="btn btn-secondary">Bekor qilish</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

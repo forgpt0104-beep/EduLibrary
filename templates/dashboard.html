@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard - EduLibrary{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block content %}
+
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="icon" style="background:#dbeafe;">
+      <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="#1a73e8"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+    </div>
+    <div class="label">Jami kitoblar</div>
+    <div class="value">{{ total_books }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="icon" style="background:#dcfce7;">
+      <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="#16a34a"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+    </div>
+    <div class="label">Jami o'quvchilar</div>
+    <div class="value">{{ total_students }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="icon" style="background:#fef3c7;">
+      <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="#d97706"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+    </div>
+    <div class="label">Faol berishlar</div>
+    <div class="value">{{ active_borrows }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="icon" style="background:#fee2e2;">
+      <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="#dc2626"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+    </div>
+    <div class="label">Muddati o'tgan</div>
+    <div class="value" style="color:#dc2626;">{{ overdue_count }}</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <h3>So'nggi berishlar</h3>
+    <a href="{{ url_for('add_borrow') }}" class="btn btn-primary btn-sm">+ Kitob berish</a>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>O'quvchi</th>
+          <th>Kitob</th>
+          <th>Berilgan sana</th>
+          <th>Qaytarish muddati</th>
+          <th>Holat</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for b in recent_borrows %}
+        <tr>
+          <td style="color:#64748b;">{{ b.id }}</td>
+          <td>{{ b.student.full_name }}</td>
+          <td>{{ b.book.title }}</td>
+          <td>{{ b.borrow_date }}</td>
+          <td>{{ b.due_date }}</td>
+          <td>
+            {% if b.status == 'returned' %}
+              <span class="badge badge-success">Qaytarildi</span>
+            {% elif b.is_overdue %}
+              <span class="badge badge-danger">Muddati o'tdi</span>
+            {% else %}
+              <span class="badge badge-warning">Berilgan</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6" style="text-align:center; color:#64748b; padding:24px;">Hozircha ma'lumot yo'q</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

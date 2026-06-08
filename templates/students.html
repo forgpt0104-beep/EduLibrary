@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+{% block title %}O'quvchilar - EduLibrary{% endblock %}
+{% block page_title %}O'quvchilar{% endblock %}
+{% block content %}
+<div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:20px;">
+  <form method="GET" class="search-bar" style="margin:0;">
+    <input class="form-control" type="text" name="q" value="{{ q }}" placeholder="Ism yoki ID bo'yicha qidirish...">
+    <button class="btn btn-secondary" type="submit">Qidirish</button>
+    {% if q %}<a href="{{ url_for('students') }}" class="btn btn-secondary">✕</a>{% endif %}
+  </form>
+  <a href="{{ url_for('add_student') }}" class="btn btn-primary">+ O'quvchi qo'shish</a>
+</div>
+<div class="card">
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>F.I.Sh.</th>
+          <th>ID raqam</th>
+          <th>Sinf</th>
+          <th>Telefon</th>
+          <th>Faol kitoblar</th>
+          <th>Amallar</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in students %}
+        <tr>
+          <td style="color:#64748b;">{{ loop.index }}</td>
+          <td><strong>{{ s.full_name }}</strong></td>
+          <td><code style="background:#f1f5f9; padding:2px 6px; border-radius:4px; font-size:12px;">{{ s.student_id }}</code></td>
+          <td>{{ s.grade }}</td>
+          <td>{{ s.phone or '—' }}</td>
+          <td>
+            {% set active = s.borrows|selectattr('status','equalto','borrowed')|list|length %}
+            {% if active > 0 %}
+              <span class="badge badge-warning">{{ active }} ta</span>
+            {% else %}
+              <span class="badge badge-success">0</span>
+            {% endif %}
+          </td>
+          <td>
+            <a href="{{ url_for('edit_student', id=s.id) }}" class="btn btn-secondary btn-sm">Tahrirlash</a>
+            <form method="POST" action="{{ url_for('delete_student', id=s.id) }}" style="display:inline;" onsubmit="return confirm('O\'chirmoqchimisiz?')">
+              <button class="btn btn-danger btn-sm" type="submit">O'chirish</button>
+            </form>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7" style="text-align:center; color:#64748b; padding:24px;">O'quvchi topilmadi</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

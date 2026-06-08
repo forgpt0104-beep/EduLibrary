@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block auth_content %}
+<div class="login-wrap">
+  <div class="login-card">
+    <div class="login-logo">
+      <h2>Edu<span>Library</span></h2>
+      <p>Maktab kutubxona tizimi</p>
+    </div>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for cat, msg in messages %}
+        <div class="alert alert-{{ cat }}">{{ msg }}</div>
+      {% endfor %}
+    {% endwith %}
+    <form method="POST">
+      <div class="form-group">
+        <label>Login</label>
+        <input class="form-control" type="text" name="username" placeholder="admin" required>
+      </div>
+      <div class="form-group">
+        <label>Parol</label>
+        <input class="form-control" type="password" name="password" placeholder="••••••••" required>
+      </div>
+      <button class="btn btn-primary" style="width:100%; justify-content:center; padding:11px;" type="submit">Kirish</button>
+    </form>
+    <p style="text-align:center; margin-top:16px; font-size:12px; color:#64748b;">Default: admin / admin123</p>
+  </div>
+</div>
+{% endblock %}

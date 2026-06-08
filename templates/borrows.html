@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+{% block title %}Berishlar - EduLibrary{% endblock %}
+{% block page_title %}Kitob berish / Qaytarish{% endblock %}
+{% block content %}
+<div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:20px;">
+  <div style="display:flex; gap:8px;">
+    <a href="{{ url_for('borrows') }}" class="btn {% if status_filter=='all' %}btn-primary{% else %}btn-secondary{% endif %} btn-sm">Hammasi</a>
+    <a href="{{ url_for('borrows', status='borrowed') }}" class="btn {% if status_filter=='borrowed' %}btn-primary{% else %}btn-secondary{% endif %} btn-sm">Berilgan</a>
+    <a href="{{ url_for('borrows', status='overdue') }}" class="btn {% if status_filter=='overdue' %}btn-primary{% else %}btn-secondary{% endif %} btn-sm">Muddati o'tgan</a>
+    <a href="{{ url_for('borrows', status='returned') }}" class="btn {% if status_filter=='returned' %}btn-primary{% else %}btn-secondary{% endif %} btn-sm">Qaytarilgan</a>
+  </div>
+  <a href="{{ url_for('add_borrow') }}" class="btn btn-primary">+ Kitob berish</a>
+</div>
+
+<div class="card">
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>O'quvchi</th>
+          <th>Sinf</th>
+          <th>Kitob</th>
+          <th>Berilgan</th>
+          <th>Muddat</th>
+          <th>Holat</th>
+          <th>Amal</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for b in borrows %}
+        <tr>
+          <td style="color:#64748b;">{{ b.id }}</td>
+          <td><strong>{{ b.student.full_name }}</strong></td>
+          <td>{{ b.student.grade }}</td>
+          <td>{{ b.book.title }}</td>
+          <td>{{ b.borrow_date }}</td>
+          <td {% if b.is_overdue %}style="color:#dc2626; font-weight:600;"{% endif %}>{{ b.due_date }}</td>
+          <td>
+            {% if b.status == 'returned' %}
+              <span class="badge badge-success">Qaytarildi</span>
+            {% elif b.is_overdue %}
+              <span class="badge badge-danger">Muddati o'tdi</span>
+            {% else %}
+              <span class="badge badge-warning">Berilgan</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if b.status == 'borrowed' %}
+            <form method="POST" action="{{ url_for('return_book', id=b.id) }}" style="display:inline;" onsubmit="return confirm('Kitob qaytarilsinmi?')">
+              <button class="btn btn-success btn-sm" type="submit">Qaytarish</button>
+            </form>
+            {% else %}
+              <span style="color:#64748b; font-size:13px;">{{ b.return_date }}</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="8" style="text-align:center; color:#64748b; padding:24px;">Hozircha ma'lumot yo'q</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

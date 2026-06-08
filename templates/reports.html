@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% block title %}Hisobotlar - EduLibrary{% endblock %}
+{% block page_title %}Hisobotlar{% endblock %}
+{% block content %}
+
+<div style="display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:20px;">
+  <div class="card">
+    <div class="card-header"><h3>🏆 Eng ko'p olingan kitoblar</h3></div>
+    <table>
+      <thead><tr><th>#</th><th>Kitob</th><th>Marta</th></tr></thead>
+      <tbody>
+        {% for book, cnt in top_books %}
+        <tr>
+          <td style="color:#64748b;">{{ loop.index }}</td>
+          <td><strong>{{ book.title }}</strong><br><small style="color:#64748b;">{{ book.author }}</small></td>
+          <td><span class="badge badge-info">{{ cnt }}</span></td>
+        </tr>
+        {% else %}
+        <tr><td colspan="3" style="text-align:center; color:#64748b; padding:16px;">Ma'lumot yo'q</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><h3>📚 Eng faol o'quvchilar</h3></div>
+    <table>
+      <thead><tr><th>#</th><th>O'quvchi</th><th>Sinf</th><th>Marta</th></tr></thead>
+      <tbody>
+        {% for student, cnt in top_students %}
+        <tr>
+          <td style="color:#64748b;">{{ loop.index }}</td>
+          <td><strong>{{ student.full_name }}</strong></td>
+          <td>{{ student.grade }}</td>
+          <td><span class="badge badge-success">{{ cnt }}</span></td>
+        </tr>
+        {% else %}
+        <tr><td colspan="4" style="text-align:center; color:#64748b; padding:16px;">Ma'lumot yo'q</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <h3>⚠️ Muddati o'tgan kitoblar</h3>
+    <span class="badge badge-danger">{{ overdue_borrows|length }} ta</span>
+  </div>
+  {% if overdue_borrows %}
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>#</th><th>O'quvchi</th><th>Sinf</th><th>Kitob</th><th>Berilgan</th><th>Muddat</th><th>Kechikish</th></tr>
+      </thead>
+      <tbody>
+        {% for b in overdue_borrows %}
+        {% set days_late = (today - b.due_date).days if today is defined else 0 %}
+        <tr>
+          <td style="color:#64748b;">{{ loop.index }}</td>
+          <td><strong>{{ b.student.full_name }}</strong></td>
+          <td>{{ b.student.grade }}</td>
+          <td>{{ b.book.title }}</td>
+          <td>{{ b.borrow_date }}</td>
+          <td style="color:#dc2626; font-weight:600;">{{ b.due_date }}</td>
+          <td><span class="badge badge-danger">Kechikdi</span></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p style="color:#16a34a; font-weight:500; padding:12px 0;">✅ Muddati o'tgan kitob yo'q!</p>
+  {% endif %}
+</div>
+{% endblock %}
