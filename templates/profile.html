@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+{% block title %}Profil - EduLibrary{% endblock %}
+{% block page_title %}Mening profilim{% endblock %}
+{% block content %}
+<div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; max-width:800px;">
+
+  <div class="card">
+    <div class="card-header"><h3>Profil ma'lumotlari</h3></div>
+    <div style="display:flex; align-items:center; gap:14px; margin-bottom:20px;">
+      <div style="width:56px; height:56px; border-radius:14px; background:var(--primary); color:#fff; display:flex; align-items:center; justify-content:center; font-size:22px; font-weight:700;">
+        {{ current_user.username[0].upper() }}
+      </div>
+      <div>
+        <div style="font-weight:700; font-size:16px;">{{ current_user.display_name }}</div>
+        <div style="font-size:12px; color:var(--text-muted);">
+          {% if current_user.role == 'admin' %}<span class="badge badge-danger">Admin</span>{% else %}<span class="badge badge-success">Kutubxonachi</span>{% endif %}
+          · {{ current_user.username }}
+        </div>
+      </div>
+    </div>
+    <form method="POST">
+      <input type="hidden" name="action" value="update_info">
+      <div class="form-group">
+        <label>To'liq ism</label>
+        <input class="form-control" type="text" name="full_name" value="{{ current_user.full_name or '' }}" placeholder="Ism familiya">
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <input class="form-control" type="email" name="email" value="{{ current_user.email or '' }}" placeholder="email@example.com">
+      </div>
+      <div class="form-group">
+        <label>Telefon</label>
+        <input class="form-control" type="text" name="phone" value="{{ current_user.phone or '' }}" placeholder="+998901234567">
+      </div>
+      <button class="btn btn-primary" type="submit">Saqlash</button>
+    </form>
+
+    <div style="margin-top:16px; padding-top:14px; border-top:1px solid var(--border);">
+      <div style="font-size:12px; color:var(--text-muted); margin-bottom:6px;">
+        Ro'yxatga olingan: {{ current_user.created_at.strftime('%d.%m.%Y') if current_user.created_at else '—' }}
+      </div>
+      <div style="font-size:12px; color:var(--text-muted);">
+        So'nggi kirish: {{ current_user.last_login.strftime('%d.%m.%Y %H:%M') if current_user.last_login else '—' }}
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><h3>Parolni o'zgartirish</h3></div>
+    <form method="POST">
+      <input type="hidden" name="action" value="change_password">
+      <div class="form-group">
+        <label>Eski parol *</label>
+        <input class="form-control" type="password" name="old_password" required>
+      </div>
+      <div class="form-group">
+        <label>Yangi parol *</label>
+        <input class="form-control" type="password" name="new_password" required minlength="6">
+        <div class="form-hint">Kamida 6 ta belgi</div>
+      </div>
+      <div class="form-group">
+        <label>Yangi parolni tasdiqlang *</label>
+        <input class="form-control" type="password" name="confirm_password" required minlength="6">
+      </div>
+      <button class="btn btn-warning" type="submit">Parolni o'zgartirish</button>
+    </form>
+  </div>
+
+</div>
+{% endblock %}

@@ -1,41 +1,65 @@
 {% extends 'base.html' %}
 {% block title %}{{ 'Tahrirlash' if book else 'Kitob qo\'shish' }} - EduLibrary{% endblock %}
-{% block page_title %}{{ 'Kitob tahrirlash' if book else 'Yangi kitob' }}{% endblock %}
+{% block page_title %}{{ 'Kitob tahrirlash' if book else 'Yangi kitob qo\'shish' }}{% endblock %}
 {% block content %}
-<div class="card" style="max-width:600px;">
+<div class="card" style="max-width:720px;">
   <form method="POST">
     <div class="form-grid">
       <div class="form-group" style="grid-column:1/-1;">
         <label>Kitob nomi *</label>
-        <input class="form-control" type="text" name="title" value="{{ book.title if book else '' }}" required>
+        <input class="form-control" type="text" name="title" value="{{ book.title if book else '' }}" placeholder="Kitob nomini kiriting" required>
       </div>
       <div class="form-group">
         <label>Muallif *</label>
-        <input class="form-control" type="text" name="author" value="{{ book.author if book else '' }}" required>
+        <input class="form-control" type="text" name="author" value="{{ book.author if book else '' }}" placeholder="Muallif ismi" required>
       </div>
       <div class="form-group">
         <label>ISBN</label>
-        <input class="form-control" type="text" name="isbn" value="{{ book.isbn if book else '' }}">
+        <input class="form-control" type="text" name="isbn" value="{{ book.isbn if book else '' }}" placeholder="978-...">
       </div>
       <div class="form-group">
         <label>Kategoriya</label>
         <select class="form-control" name="category">
           <option value="">Tanlang</option>
-          {% for cat in ['Adabiyot', 'Matematika', 'Fizika', 'Kimyo', 'Biologiya', 'Tarix', 'Geografiya', 'Til', 'Texnologiya', 'Boshqa'] %}
-          <option value="{{ cat }}" {% if book and book.category == cat %}selected{% endif %}>{{ cat }}</option>
+          {% for c in categories %}
+          <option value="{{ c }}" {% if book and book.category == c %}selected{% endif %}>{{ c }}</option>
           {% endfor %}
         </select>
       </div>
-      {% if not book %}
+      <div class="form-group">
+        <label>Til</label>
+        <select class="form-control" name="language">
+          {% for lang in languages %}
+          <option value="{{ lang }}" {% if book and book.language == lang %}selected{% elif not book and lang == "O'zbek" %}selected{% endif %}>{{ lang }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Nashriyot</label>
+        <input class="form-control" type="text" name="publisher" value="{{ book.publisher if book else '' }}" placeholder="Nashriyot nomi">
+      </div>
+      <div class="form-group">
+        <label>Nashr yili</label>
+        <input class="form-control" type="number" name="year" value="{{ book.year if book else '' }}" placeholder="2023" min="1800" max="2099">
+      </div>
+      <div class="form-group">
+        <label>Javon joylashuvi</label>
+        <input class="form-control" type="text" name="shelf_location" value="{{ book.shelf_location if book else '' }}" placeholder="A-1, B-2...">
+        <div class="form-hint">Kitob qaysi javonda turishini belgilang</div>
+      </div>
       <div class="form-group">
         <label>Nusxalar soni</label>
-        <input class="form-control" type="number" name="total_copies" value="1" min="1">
+        <input class="form-control" type="number" name="total_copies" value="{{ book.total_copies if book else 1 }}" min="1">
+        <div class="form-hint">{% if book %}Yangi qiymat mavjud nusxalarga ta'sir qiladi{% else %}Kutubxonaga qo'shilayotgan nusxalar soni{% endif %}</div>
       </div>
-      {% endif %}
+      <div class="form-group" style="grid-column:1/-1;">
+        <label>Tavsif</label>
+        <textarea class="form-control" name="description" placeholder="Kitob haqida qisqacha ma'lumot...">{{ book.description if book else '' }}</textarea>
+      </div>
     </div>
     <div style="display:flex; gap:10px; margin-top:8px;">
       <button class="btn btn-primary" type="submit">{{ 'Saqlash' if book else 'Qo\'shish' }}</button>
-      <a href="{{ url_for('books') }}" class="btn btn-secondary">Bekor qilish</a>
+      <a href="{{ url_for('book_detail', id=book.id) if book else url_for('books') }}" class="btn btn-secondary">Bekor qilish</a>
     </div>
   </form>
 </div>

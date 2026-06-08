@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+{% block title %}{{ book.title }} - EduLibrary{% endblock %}
+{% block page_title %}Kitob tafsilotlari{% endblock %}
+{% block topbar_actions %}
+  <a href="{{ url_for('edit_book', id=book.id) }}" class="btn btn-secondary btn-sm">Tahrirlash</a>
+{% endblock %}
+{% block content %}
+
+<div class="detail-header">
+  <div class="detail-avatar" style="background: linear-gradient(135deg, #059669, #065f46); font-size:28px;">
+    📚
+  </div>
+  <div class="detail-title" style="flex:1;">
+    <h2>{{ book.title }}</h2>
+    <p>{{ book.author }}{% if book.publisher %} · {{ book.publisher }}{% endif %}{% if book.year %} · {{ book.year }}{% endif %}</p>
+    <div class="detail-meta">
+      {% if book.category %}<span class="badge badge-info" style="font-size:11px;">{{ book.category }}</span>{% endif %}
+      {% if book.language %}<span>🌐 {{ book.language }}</span>{% endif %}
+      {% if book.isbn %}<span>ISBN: {{ book.isbn }}</span>{% endif %}
+      {% if book.shelf_location %}<span>📍 Javon: {{ book.shelf_location }}</span>{% endif %}
+    </div>
+  </div>
+  <div style="display:flex; gap:12px; text-align:center;">
+    <div style="background:var(--bg); border:1px solid var(--border); border-radius:10px; padding:14px 20px;">
+      <div style="font-size:22px; font-weight:700; color:var(--primary);">{{ book.total_copies }}</div>
+      <div style="font-size:11px; color:var(--text-muted);">Jami nusxa</div>
+    </div>
+    <div style="background:var(--bg); border:1px solid var(--border); border-radius:10px; padding:14px 20px;">
+      <div style="font-size:22px; font-weight:700; color:{% if book.available_copies == 0 %}#dc2626{% else %}#16a34a{% endif %};">{{ book.available_copies }}</div>
+      <div style="font-size:11px; color:var(--text-muted);">Mavjud</div>
+    </div>
+    <div style="background:var(--bg); border:1px solid var(--border); border-radius:10px; padding:14px 20px;">
+      <div style="font-size:22px; font-weight:700; color:#d97706;">{{ book.borrow_count }}</div>
+      <div style="font-size:11px; color:var(--text-muted);">Jami berilgan</div>
+    </div>
+  </div>
+</div>
+
+<div style="display:grid; grid-template-columns:1fr 2fr; gap:16px;">
+  <div class="card">
+    <div class="card-header"><h3>Kitob ma'lumotlari</h3></div>
+    <div>
+      <div class="info-item"><span class="info-label">Nomi</span><span class="info-value">{{ book.title }}</span></div>
+      <div class="info-item"><span class="info-label">Muallif</span><span class="info-value">{{ book.author }}</span></div>
+      <div class="info-item"><span class="info-label">ISBN</span><span class="info-value">{{ book.isbn or '—' }}</span></div>
+      <div class="info-item"><span class="info-label">Kategoriya</span><span class="info-value">{{ book.category or '—' }}</span></div>
+      <div class="info-item"><span class="info-label">Nashriyot</span><span class="info-value">{{ book.publisher or '—' }}</span></div>
+      <div class="info-item"><span class="info-label">Nashr yili</span><span class="info-value">{{ book.year or '—' }}</span></div>
+      <div class="info-item"><span class="info-label">Til</span><span class="info-value">{{ book.language or '—' }}</span></div>
+      <div class="info-item"><span class="info-label">Javon joyi</span><span class="info-value">{{ book.shelf_location or '—' }}</span></div>
+      <div class="info-item"><span class="info-label">Jami nusxa</span><span class="info-value">{{ book.total_copies }}</span></div>
+      <div class="info-item"><span class="info-label">Mavjud nusxa</span>
+        <span class="info-value" style="color:{% if book.available_copies == 0 %}#dc2626{% else %}#16a34a{% endif %}; font-weight:700;">{{ book.available_copies }}</span>
+      </div>
+      <div class="info-item"><span class="info-label">Qo'shilgan sana</span><span class="info-value" style="font-size:12px;">{{ book.created_at.strftime('%d.%m.%Y') }}</span></div>
+    </div>
+    {% if book.description %}
+    <div style="margin-top:14px; padding-top:14px; border-top:1px solid var(--border);">
+      <div style="font-size:12px; color:var(--text-muted); margin-bottom:6px; font-weight:600;">TAVSIF</div>
+      <p style="font-size:13px; line-height:1.6; color:var(--text);">{{ book.description }}</p>
+    </div>
+    {% endif %}
+    {% if book.available_copies > 0 %}
+    <div style="margin-top:14px;">
+      <a href="{{ url_for('add_borrow') }}" class="btn btn-primary btn-sm" style="width:100%; justify-content:center;">+ Bu kitobni berish</a>
+    </div>
+    {% else %}
+    <div style="margin-top:14px; padding:10px; background:#fee2e2; border-radius:8px; font-size:13px; color:#dc2626; text-align:center;">
+      Barcha nusxalar berilgan
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <h3>Berish tarixi</h3>
+      <span class="badge badge-secondary">{{ history|length }} ta</span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>O'quvchi</th>
+            <th>Sinf</th>
+            <th>Berilgan</th>
+            <th>Muddat</th>
+            <th>Qaytarilgan</th>
+            <th>Holat</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for b in history %}
+          <tr>
+            <td>
+              <a href="{{ url_for('student_detail', id=b.student.id) }}" style="color:var(--text); text-decoration:none; font-weight:500;">{{ b.student.full_name }}</a>
+            </td>
+            <td><span class="badge badge-secondary">{{ b.student.grade }}</span></td>
+            <td style="font-size:12px; color:var(--text-muted);">{{ b.borrow_date }}</td>
+            <td style="font-size:12px; {% if b.is_overdue %}color:#dc2626; font-weight:600;{% else %}color:var(--text-muted);{% endif %}">{{ b.due_date }}</td>
+            <td style="font-size:12px; color:var(--text-muted);">{{ b.return_date or '—' }}</td>
+            <td>
+              {% if b.status == 'returned' %}
+                <span class="badge badge-success">Qaytarildi</span>
+              {% elif b.is_overdue %}
+                <span class="badge badge-danger">Kechikdi</span>
+              {% else %}
+                <span class="badge badge-warning">Qo'lida</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="6" style="text-align:center; color:var(--text-muted); padding:24px;">Hali berilmagan</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

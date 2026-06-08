@@ -1,0 +1,166 @@
+{% extends 'base.html' %}
+{% block title %}{{ student.full_name }} - EduLibrary{% endblock %}
+{% block page_title %}O'quvchi profili{% endblock %}
+{% block topbar_actions %}
+  <a href="{{ url_for('add_borrow') }}" class="btn btn-primary btn-sm">+ Kitob berish</a>
+  <a href="{{ url_for('edit_student', id=student.id) }}" class="btn btn-secondary btn-sm">Tahrirlash</a>
+{% endblock %}
+{% block content %}
+
+<div class="detail-header">
+  <div class="detail-avatar" style="background: linear-gradient(135deg, #1a73e8, #0d47a1);">
+    {{ student.full_name[0].upper() }}
+  </div>
+  <div class="detail-title" style="flex:1;">
+    <h2>{{ student.full_name }}</h2>
+    <p>{{ student.grade }} sinf · <code style="background:#f1f5f9; padding:1px 6px; border-radius:4px; font-size:12px;">{{ student.student_id }}</code></p>
+    <div class="detail-meta">
+      {% if student.phone %}
+      <span>📞 {{ student.phone }}</span>
+      {% endif %}
+      {% if student.email %}
+      <span>✉️ {{ student.email }}</span>
+      {% endif %}
+      {% if student.gender %}
+      <span>{{ '♂ Erkak' if student.gender == 'erkak' else '♀ Ayol' }}</span>
+      {% endif %}
+      {% if student.date_of_birth %}
+      <span>🎂 {{ student.date_of_birth }}</span>
+      {% endif %}
+    </div>
+  </div>
+  <div style="display:flex; gap:12px; text-align:center;">
+    <div style="background:var(--bg); border:1px solid var(--border); border-radius:10px; padding:14px 20px;">
+      <div style="font-size:22px; font-weight:700; color:var(--primary);">{{ history|length }}</div>
+      <div style="font-size:11px; color:var(--text-muted);">Jami berilgan</div>
+    </div>
+    <div style="background:var(--bg); border:1px solid var(--border); border-radius:10px; padding:14px 20px;">
+      <div style="font-size:22px; font-weight:700; color:#d97706;">{{ student.active_borrows|length }}</div>
+      <div style="font-size:11px; color:var(--text-muted);">Hozir qo'lida</div>
+    </div>
+    <div style="background:var(--bg); border:1px solid var(--border); border-radius:10px; padding:14px 20px;">
+      <div style="font-size:22px; font-weight:700; color:#dc2626;">{{ student.overdue_borrows|length }}</div>
+      <div style="font-size:11px; color:var(--text-muted);">Kechikkan</div>
+    </div>
+  </div>
+</div>
+
+<div style="display:grid; grid-template-columns:1fr 2fr; gap:16px;">
+  <div>
+    <div class="card" style="margin-bottom:16px;">
+      <div class="card-header"><h3>Shaxsiy ma'lumotlar</h3></div>
+      <div>
+        <div class="info-item">
+          <span class="info-label">To'liq ism</span>
+          <span class="info-value">{{ student.full_name }}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">O'quvchi ID</span>
+          <span class="info-value"><code style="background:#f1f5f9; padding:2px 8px; border-radius:4px;">{{ student.student_id }}</code></span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Sinf</span>
+          <span class="info-value">{{ student.grade }}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Jinsi</span>
+          <span class="info-value">{{ student.gender or '—' }}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Tug'ilgan sana</span>
+          <span class="info-value">{{ student.date_of_birth or '—' }}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Telefon</span>
+          <span class="info-value">{{ student.phone or '—' }}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Email</span>
+          <span class="info-value" style="word-break:break-all;">{{ student.email or '—' }}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Manzil</span>
+          <span class="info-value">{{ student.address or '—' }}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Ota-ona</span>
+          <span class="info-value">{{ student.parent_name or '—' }}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Ota-ona tel.</span>
+          <span class="info-value">{{ student.parent_phone or '—' }}</span>
+        </div>
+        {% if student.notes %}
+        <div class="info-item" style="flex-direction:column; gap:4px;">
+          <span class="info-label">Izoh</span>
+          <span class="info-value" style="font-size:12px; color:var(--text-muted);">{{ student.notes }}</span>
+        </div>
+        {% endif %}
+        <div class="info-item">
+          <span class="info-label">Ro'yxatga olingan</span>
+          <span class="info-value" style="font-size:12px;">{{ student.created_at.strftime('%d.%m.%Y') }}</span>
+        </div>
+      </div>
+    </div>
+
+    {% set unpaid = student.total_fines %}
+    {% if unpaid > 0 %}
+    <div class="card" style="border-color:#fecaca;">
+      <div class="card-header"><h3 style="color:#dc2626;">Jarimalar</h3></div>
+      <div style="font-size:20px; font-weight:700; color:#dc2626;">{{ '{:,.0f}'.format(unpaid) }} so'm</div>
+      <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">To'lanmagan jarima</div>
+      <form method="POST" action="{{ url_for('pay_all_fines') }}" style="margin-top:12px;">
+        <input type="hidden" name="student_id" value="{{ student.id }}">
+        <button class="btn btn-success btn-sm" type="submit" onclick="return confirm('Barcha jarimalarni to\'lashni tasdiqlaysizmi?')">
+          Barchasini to'lash
+        </button>
+      </form>
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <h3>Kitob tarixi</h3>
+      <span class="badge badge-secondary">{{ history|length }} ta</span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Kitob</th>
+            <th>Berilgan</th>
+            <th>Muddat</th>
+            <th>Qaytarilgan</th>
+            <th>Holat</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for b in history %}
+          <tr>
+            <td>
+              <a href="{{ url_for('book_detail', id=b.book.id) }}" style="color:var(--text); text-decoration:none; font-weight:500;">{{ b.book.title }}</a>
+              <div style="font-size:11px; color:var(--text-muted);">{{ b.book.author }}</div>
+            </td>
+            <td style="font-size:12px; color:var(--text-muted);">{{ b.borrow_date }}</td>
+            <td style="font-size:12px; {% if b.is_overdue %}color:#dc2626; font-weight:600;{% else %}color:var(--text-muted);{% endif %}">{{ b.due_date }}</td>
+            <td style="font-size:12px; color:var(--text-muted);">{{ b.return_date or '—' }}</td>
+            <td>
+              {% if b.status == 'returned' %}
+                <span class="badge badge-success">Qaytarildi</span>
+              {% elif b.is_overdue %}
+                <span class="badge badge-danger">{{ b.days_overdue }} kun kechikdi</span>
+              {% else %}
+                <span class="badge badge-warning">Qo'lida</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="5" style="text-align:center; color:var(--text-muted); padding:24px;">Hali kitob olinmagan</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

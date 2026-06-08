@@ -1,14 +1,29 @@
 {% extends 'base.html' %}
 {% block title %}Kitoblar - EduLibrary{% endblock %}
 {% block page_title %}Kitoblar{% endblock %}
+{% block topbar_actions %}
+  <a href="{{ url_for('export_books') }}" class="btn btn-secondary btn-sm">↓ CSV</a>
+  <a href="{{ url_for('add_book') }}" class="btn btn-primary btn-sm">+ Kitob qo'shish</a>
+{% endblock %}
 {% block content %}
-<div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:20px;">
-  <form method="GET" class="search-bar" style="margin:0;">
-    <input class="form-control" type="text" name="q" value="{{ q }}" placeholder="Kitob nomi yoki muallif...">
-    <button class="btn btn-secondary" type="submit">Qidirish</button>
-    {% if q %}<a href="{{ url_for('books') }}" class="btn btn-secondary">✕</a>{% endif %}
-  </form>
-  <a href="{{ url_for('add_book') }}" class="btn btn-primary">+ Kitob qo'shish</a>
+<div class="filter-bar">
+  <div class="filter-left">
+    <form method="GET" style="display:flex; gap:8px; align-items:center;">
+      <div class="search-input-wrap">
+        <svg class="search-icon" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+        <input class="form-control" type="text" name="q" value="{{ q }}" placeholder="Nomi, muallif yoki ISBN..." style="padding-left:34px; min-width:240px;">
+      </div>
+      <select name="cat" class="form-control" style="width:160px;">
+        <option value="">Barcha kategoriyalar</option>
+        {% for c in categories %}
+        <option value="{{ c }}" {% if cat == c %}selected{% endif %}>{{ c }}</option>
+        {% endfor %}
+      </select>
+      <button class="btn btn-secondary btn-sm" type="submit">Qidirish</button>
+      {% if q or cat %}<a href="{{ url_for('books') }}" class="btn btn-secondary btn-sm">✕</a>{% endif %}
+    </form>
+  </div>
+  <span style="font-size:13px; color:var(--text-muted);">{{ books|length }} ta kitob</span>
 </div>
 
 <div class="card">
@@ -20,33 +35,38 @@
           <th>Kitob nomi</th>
           <th>Muallif</th>
           <th>Kategoriya</th>
-          <th>Jami</th>
-          <th>Mavjud</th>
+          <th>Til / Yil</th>
+          <th>Javon</th>
+          <th>Mavjud / Jami</th>
           <th>Amallar</th>
         </tr>
       </thead>
       <tbody>
-        {% for book in books %}
+        {% for b in books %}
         <tr>
-          <td style="color:#64748b;">{{ loop.index }}</td>
-          <td><strong>{{ book.title }}</strong></td>
-          <td>{{ book.author }}</td>
-          <td><span class="badge badge-info">{{ book.category or '—' }}</span></td>
-          <td>{{ book.total_copies }}</td>
+          <td style="color:var(--text-muted);">{{ loop.index }}</td>
           <td>
-            <span class="badge {% if book.available_copies > 0 %}badge-success{% else %}badge-danger{% endif %}">
-              {{ book.available_copies }}
-            </span>
+            <a href="{{ url_for('book_detail', id=b.id) }}" style="color:var(--text); font-weight:600; text-decoration:none;">{{ b.title }}</a>
+            {% if b.isbn %}<div style="font-size:11px; color:var(--text-muted);">{{ b.isbn }}</div>{% endif %}
           </td>
+          <td style="color:var(--text-muted);">{{ b.author }}</td>
+          <td>{% if b.category %}<span class="badge badge-info">{{ b.category }}</span>{% else %}<span style="color:var(--text-muted);">—</span>{% endif %}</td>
+          <td style="font-size:12px; color:var(--text-muted);">{{ b.language or '—' }}{% if b.year %}<br>{{ b.year }}{% endif %}</td>
+          <td>{% if b.shelf_location %}<code style="background:#f1f5f9; padding:2px 6px; border-radius:4px; font-size:11px;">{{ b.shelf_location }}</code>{% else %}<span style="color:var(--text-muted);">—</span>{% endif %}</td>
           <td>
-            <a href="{{ url_for('edit_book', id=book.id) }}" class="btn btn-secondary btn-sm">Tahrirlash</a>
-            <form method="POST" action="{{ url_for('delete_book', id=book.id) }}" style="display:inline;" onsubmit="return confirm('O\'chirmoqchimisiz?')">
+            <span style="font-size:14px; font-weight:700; color:{% if b.available_copies == 0 %}#dc2626{% elif b.available_copies <= 2 %}#d97706{% else %}#16a34a{% endif %};">{{ b.available_copies }}</span>
+            <span style="font-size:12px; color:var(--text-muted);">/ {{ b.total_copies }}</span>
+          </td>
+          <td style="white-space:nowrap;">
+            <a href="{{ url_for('book_detail', id=b.id) }}" class="btn btn-info btn-sm">Ko'rish</a>
+            <a href="{{ url_for('edit_book', id=b.id) }}" class="btn btn-secondary btn-sm">Tahrir</a>
+            <form method="POST" action="{{ url_for('delete_book', id=b.id) }}" style="display:inline;" onsubmit="return confirm('Kitobni o\'chirmoqchimisiz?')">
               <button class="btn btn-danger btn-sm" type="submit">O'chirish</button>
             </form>
           </td>
         </tr>
         {% else %}
-        <tr><td colspan="7" style="text-align:center; color:#64748b; padding:24px;">Kitob topilmadi</td></tr>
+        <tr><td colspan="8" style="text-align:center; color:var(--text-muted); padding:32px;">Kitob topilmadi</td></tr>
         {% endfor %}
       </tbody>
     </table>

@@ -2,37 +2,44 @@
 {% block title %}Kitob berish - EduLibrary{% endblock %}
 {% block page_title %}Kitob berish{% endblock %}
 {% block content %}
-<div class="card" style="max-width:560px;">
+<div class="card" style="max-width:600px;">
   <form method="POST">
     <div class="form-group">
       <label>O'quvchi *</label>
       <select class="form-control" name="student_id" required>
-        <option value="">-- O'quvchini tanlang --</option>
+        <option value="">— O'quvchini tanlang —</option>
         {% for s in students %}
-        <option value="{{ s.id }}">{{ s.full_name }} ({{ s.grade }})</option>
+        <option value="{{ s.id }}">{{ s.full_name }} · {{ s.grade }} · {{ s.student_id }}</option>
         {% endfor %}
       </select>
     </div>
     <div class="form-group">
       <label>Kitob *</label>
       <select class="form-control" name="book_id" required>
-        <option value="">-- Kitobni tanlang --</option>
+        <option value="">— Kitobni tanlang —</option>
         {% for b in books %}
         <option value="{{ b.id }}">{{ b.title }} — {{ b.author }} ({{ b.available_copies }} ta mavjud)</option>
         {% endfor %}
       </select>
+      {% if not books %}
+      <div class="form-hint" style="color:#dc2626;">Hozirda mavjud kitob yo'q</div>
+      {% endif %}
     </div>
     <div class="form-group">
-      <label>Qaytarish muddati (kunlarda)</label>
+      <label>Qaytarish muddati</label>
       <select class="form-control" name="days">
         <option value="7">7 kun</option>
-        <option value="14" selected>14 kun</option>
+        <option value="14" selected>14 kun (standart)</option>
         <option value="21">21 kun</option>
         <option value="30">30 kun</option>
       </select>
     </div>
+    <div class="form-group">
+      <label>Izoh (ixtiyoriy)</label>
+      <input class="form-control" type="text" name="notes" placeholder="Qo'shimcha eslatma...">
+    </div>
     <div style="display:flex; gap:10px; margin-top:8px;">
-      <button class="btn btn-primary" type="submit">Kitobni berish</button>
+      <button class="btn btn-primary" type="submit" {% if not books %}disabled{% endif %}>Kitobni berish</button>
       <a href="{{ url_for('borrows') }}" class="btn btn-secondary">Bekor qilish</a>
     </div>
   </form>

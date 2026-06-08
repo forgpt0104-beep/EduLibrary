@@ -1,6 +1,9 @@
 {% extends 'base.html' %}
 {% block title %}Dashboard - EduLibrary{% endblock %}
 {% block page_title %}Dashboard{% endblock %}
+{% block topbar_actions %}
+  <a href="{{ url_for('add_borrow') }}" class="btn btn-primary btn-sm">+ Kitob berish</a>
+{% endblock %}
 {% block content %}
 
 <div class="stats-grid">
@@ -10,6 +13,7 @@
     </div>
     <div class="label">Jami kitoblar</div>
     <div class="value">{{ total_books }}</div>
+    <div style="font-size:11px; color:var(--text-muted); margin-top:4px;">{{ available_copies }} ta mavjud</div>
   </div>
   <div class="stat-card">
     <div class="icon" style="background:#dcfce7;">
@@ -17,6 +21,7 @@
     </div>
     <div class="label">Jami o'quvchilar</div>
     <div class="value">{{ total_students }}</div>
+    <div style="font-size:11px; color:var(--text-muted); margin-top:4px;">Ro'yxatdagi</div>
   </div>
   <div class="stat-card">
     <div class="icon" style="background:#fef3c7;">
@@ -24,6 +29,7 @@
     </div>
     <div class="label">Faol berishlar</div>
     <div class="value">{{ active_borrows }}</div>
+    <div style="font-size:11px; color:var(--text-muted); margin-top:4px;">Bugun qaytarilgan: {{ returned_today }}</div>
   </div>
   <div class="stat-card">
     <div class="icon" style="background:#fee2e2;">
@@ -31,49 +37,70 @@
     </div>
     <div class="label">Muddati o'tgan</div>
     <div class="value" style="color:#dc2626;">{{ overdue_count }}</div>
+    <div style="font-size:11px; color:var(--text-muted); margin-top:4px;">To'lanmagan jarima: {{ unpaid_fines }}</div>
   </div>
 </div>
 
-<div class="card">
-  <div class="card-header">
-    <h3>So'nggi berishlar</h3>
-    <a href="{{ url_for('add_borrow') }}" class="btn btn-primary btn-sm">+ Kitob berish</a>
+<div style="display:grid; grid-template-columns: 2fr 1fr; gap:16px; margin-bottom:16px;">
+  <div class="card">
+    <div class="card-header">
+      <h3>So'nggi berishlar</h3>
+      <a href="{{ url_for('borrows') }}" style="font-size:12px; color:var(--primary); text-decoration:none;">Barchasini ko'rish →</a>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>O'quvchi</th>
+            <th>Kitob</th>
+            <th>Berilgan</th>
+            <th>Muddat</th>
+            <th>Holat</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for b in recent_borrows %}
+          <tr>
+            <td>
+              <a href="{{ url_for('student_detail', id=b.student.id) }}" style="color:var(--text); font-weight:500; text-decoration:none;">{{ b.student.full_name }}</a>
+              <div style="font-size:11px; color:var(--text-muted);">{{ b.student.grade }}</div>
+            </td>
+            <td>
+              <a href="{{ url_for('book_detail', id=b.book.id) }}" style="color:var(--text); text-decoration:none;">{{ b.book.title }}</a>
+            </td>
+            <td style="color:var(--text-muted);">{{ b.borrow_date }}</td>
+            <td {% if b.is_overdue %}style="color:#dc2626; font-weight:600;"{% endif %}>{{ b.due_date }}</td>
+            <td>
+              {% if b.status == 'returned' %}
+                <span class="badge badge-success">Qaytarildi</span>
+              {% elif b.is_overdue %}
+                <span class="badge badge-danger">Muddati o'tdi</span>
+              {% else %}
+                <span class="badge badge-warning">Berilgan</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="5" style="text-align:center; color:var(--text-muted); padding:24px;">Hozircha ma'lumot yo'q</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
   </div>
-  <div class="table-wrap">
-    <table>
-      <thead>
-        <tr>
-          <th>#</th>
-          <th>O'quvchi</th>
-          <th>Kitob</th>
-          <th>Berilgan sana</th>
-          <th>Qaytarish muddati</th>
-          <th>Holat</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for b in recent_borrows %}
-        <tr>
-          <td style="color:#64748b;">{{ b.id }}</td>
-          <td>{{ b.student.full_name }}</td>
-          <td>{{ b.book.title }}</td>
-          <td>{{ b.borrow_date }}</td>
-          <td>{{ b.due_date }}</td>
-          <td>
-            {% if b.status == 'returned' %}
-              <span class="badge badge-success">Qaytarildi</span>
-            {% elif b.is_overdue %}
-              <span class="badge badge-danger">Muddati o'tdi</span>
-            {% else %}
-              <span class="badge badge-warning">Berilgan</span>
-            {% endif %}
-          </td>
-        </tr>
-        {% else %}
-        <tr><td colspan="6" style="text-align:center; color:#64748b; padding:24px;">Hozircha ma'lumot yo'q</td></tr>
-        {% endfor %}
-      </tbody>
-    </table>
+
+  <div class="card">
+    <div class="card-header">
+      <h3>Kategoriyalar</h3>
+    </div>
+    <div>
+      {% for cat, cnt in cat_stats %}
+      <div style="display:flex; align-items:center; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border);">
+        <span style="font-size:13px;">{{ cat or 'Boshqa' }}</span>
+        <span class="badge badge-info">{{ cnt }}</span>
+      </div>
+      {% endfor %}
+    </div>
   </div>
 </div>
+
 {% endblock %}

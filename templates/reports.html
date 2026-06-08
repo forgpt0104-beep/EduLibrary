@@ -3,7 +3,7 @@
 {% block page_title %}Hisobotlar{% endblock %}
 {% block content %}
 
-<div style="display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:20px;">
+<div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
   <div class="card">
     <div class="card-header"><h3>🏆 Eng ko'p olingan kitoblar</h3></div>
     <table>
@@ -11,12 +11,15 @@
       <tbody>
         {% for book, cnt in top_books %}
         <tr>
-          <td style="color:#64748b;">{{ loop.index }}</td>
-          <td><strong>{{ book.title }}</strong><br><small style="color:#64748b;">{{ book.author }}</small></td>
-          <td><span class="badge badge-info">{{ cnt }}</span></td>
+          <td style="color:var(--text-muted); font-weight:700;">{{ loop.index }}</td>
+          <td>
+            <a href="{{ url_for('book_detail', id=book.id) }}" style="color:var(--text); text-decoration:none; font-weight:600;">{{ book.title }}</a>
+            <div style="font-size:11px; color:var(--text-muted);">{{ book.author }}</div>
+          </td>
+          <td><span class="badge badge-info">{{ cnt }} marta</span></td>
         </tr>
         {% else %}
-        <tr><td colspan="3" style="text-align:center; color:#64748b; padding:16px;">Ma'lumot yo'q</td></tr>
+        <tr><td colspan="3" style="text-align:center; color:var(--text-muted); padding:16px;">Ma'lumot yo'q</td></tr>
         {% endfor %}
       </tbody>
     </table>
@@ -25,20 +28,49 @@
   <div class="card">
     <div class="card-header"><h3>📚 Eng faol o'quvchilar</h3></div>
     <table>
-      <thead><tr><th>#</th><th>O'quvchi</th><th>Sinf</th><th>Marta</th></tr></thead>
+      <thead><tr><th>#</th><th>O'quvchi</th><th>Marta</th></tr></thead>
       <tbody>
         {% for student, cnt in top_students %}
         <tr>
-          <td style="color:#64748b;">{{ loop.index }}</td>
-          <td><strong>{{ student.full_name }}</strong></td>
-          <td>{{ student.grade }}</td>
-          <td><span class="badge badge-success">{{ cnt }}</span></td>
+          <td style="color:var(--text-muted); font-weight:700;">{{ loop.index }}</td>
+          <td>
+            <a href="{{ url_for('student_detail', id=student.id) }}" style="color:var(--text); text-decoration:none; font-weight:600;">{{ student.full_name }}</a>
+            <div style="font-size:11px; color:var(--text-muted);">{{ student.grade }}</div>
+          </td>
+          <td><span class="badge badge-success">{{ cnt }} marta</span></td>
         </tr>
         {% else %}
-        <tr><td colspan="4" style="text-align:center; color:#64748b; padding:16px;">Ma'lumot yo'q</td></tr>
+        <tr><td colspan="3" style="text-align:center; color:var(--text-muted); padding:16px;">Ma'lumot yo'q</td></tr>
         {% endfor %}
       </tbody>
     </table>
+  </div>
+</div>
+
+<div style="display:grid; grid-template-columns:2fr 1fr; gap:16px; margin-bottom:16px;">
+  <div class="card">
+    <div class="card-header"><h3>📊 Oylik faollik (so'nggi 6 oy)</h3></div>
+    <div style="display:flex; align-items:flex-end; gap:8px; height:140px; padding-top:10px;">
+      {% set max_cnt = monthly | map(attribute='count') | max %}
+      {% for m in monthly %}
+      {% set height = ((m.count / max_cnt * 110) | int) if max_cnt > 0 else 4 %}
+      <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:4px;">
+        <span style="font-size:11px; font-weight:600; color:var(--primary);">{{ m.count }}</span>
+        <div style="width:100%; height:{{ height }}px; background:var(--primary); border-radius:4px 4px 0 0; min-height:4px; opacity:0.8;"></div>
+        <span style="font-size:10px; color:var(--text-muted); text-align:center;">{{ m.month }}</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><h3>📂 Kategoriyalar</h3></div>
+    {% for cat, cnt in cat_stats %}
+    <div style="display:flex; align-items:center; justify-content:space-between; padding:7px 0; border-bottom:1px solid var(--border);">
+      <span style="font-size:13px;">{{ cat or 'Boshqa' }}</span>
+      <span class="badge badge-info">{{ cnt }} ta</span>
+    </div>
+    {% endfor %}
   </div>
 </div>
 
@@ -51,26 +83,35 @@
   <div class="table-wrap">
     <table>
       <thead>
-        <tr><th>#</th><th>O'quvchi</th><th>Sinf</th><th>Kitob</th><th>Berilgan</th><th>Muddat</th><th>Kechikish</th></tr>
+        <tr><th>#</th><th>O'quvchi</th><th>Kitob</th><th>Berilgan</th><th>Muddat</th><th>Kechikish</th><th>Jarima</th><th>Amal</th></tr>
       </thead>
       <tbody>
         {% for b in overdue_borrows %}
-        {% set days_late = (today - b.due_date).days if today is defined else 0 %}
-        <tr>
-          <td style="color:#64748b;">{{ loop.index }}</td>
-          <td><strong>{{ b.student.full_name }}</strong></td>
-          <td>{{ b.student.grade }}</td>
-          <td>{{ b.book.title }}</td>
-          <td>{{ b.borrow_date }}</td>
-          <td style="color:#dc2626; font-weight:600;">{{ b.due_date }}</td>
-          <td><span class="badge badge-danger">Kechikdi</span></td>
+        <tr style="background:#fff5f5;">
+          <td style="color:var(--text-muted);">{{ loop.index }}</td>
+          <td>
+            <a href="{{ url_for('student_detail', id=b.student.id) }}" style="color:var(--text); font-weight:600; text-decoration:none;">{{ b.student.full_name }}</a>
+            <div style="font-size:11px; color:var(--text-muted);">{{ b.student.grade }}</div>
+          </td>
+          <td><a href="{{ url_for('book_detail', id=b.book.id) }}" style="color:var(--text); text-decoration:none;">{{ b.book.title }}</a></td>
+          <td style="font-size:12px; color:var(--text-muted);">{{ b.borrow_date }}</td>
+          <td style="color:#dc2626; font-weight:700;">{{ b.due_date }}</td>
+          <td><span class="badge badge-danger">{{ b.days_overdue }} kun</span></td>
+          <td style="font-weight:600; color:#dc2626;">{{ '{:,.0f}'.format(b.fine_amount) }} so'm</td>
+          <td>
+            <form method="POST" action="{{ url_for('return_book', id=b.id) }}" style="display:inline;" onsubmit="return confirm('Kitob qaytarilsinmi?')">
+              <button class="btn btn-success btn-sm" type="submit">Qaytarish</button>
+            </form>
+          </td>
         </tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
   {% else %}
-  <p style="color:#16a34a; font-weight:500; padding:12px 0;">✅ Muddati o'tgan kitob yo'q!</p>
+  <div style="padding:16px 0; color:#16a34a; font-weight:600; display:flex; align-items:center; gap:8px;">
+    <span style="font-size:18px;">✅</span> Muddati o'tgan kitob yo'q!
+  </div>
   {% endif %}
 </div>
 {% endblock %}

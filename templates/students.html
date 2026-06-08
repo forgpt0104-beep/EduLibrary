@@ -1,15 +1,31 @@
 {% extends 'base.html' %}
 {% block title %}O'quvchilar - EduLibrary{% endblock %}
 {% block page_title %}O'quvchilar{% endblock %}
+{% block topbar_actions %}
+  <a href="{{ url_for('export_students') }}" class="btn btn-secondary btn-sm">↓ CSV</a>
+  <a href="{{ url_for('add_student') }}" class="btn btn-primary btn-sm">+ O'quvchi qo'shish</a>
+{% endblock %}
 {% block content %}
-<div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:20px;">
-  <form method="GET" class="search-bar" style="margin:0;">
-    <input class="form-control" type="text" name="q" value="{{ q }}" placeholder="Ism yoki ID bo'yicha qidirish...">
-    <button class="btn btn-secondary" type="submit">Qidirish</button>
-    {% if q %}<a href="{{ url_for('students') }}" class="btn btn-secondary">✕</a>{% endif %}
-  </form>
-  <a href="{{ url_for('add_student') }}" class="btn btn-primary">+ O'quvchi qo'shish</a>
+<div class="filter-bar">
+  <div class="filter-left">
+    <form method="GET" style="display:flex; gap:8px; align-items:center;">
+      <div class="search-input-wrap">
+        <svg class="search-icon" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+        <input class="form-control" type="text" name="q" value="{{ q }}" placeholder="Ism, ID yoki telefon..." style="padding-left:34px; min-width:240px;">
+      </div>
+      <select name="grade" class="form-control" style="width:130px;">
+        <option value="">Barcha sinflar</option>
+        {% for g in all_grades %}
+        <option value="{{ g }}" {% if grade_filter == g %}selected{% endif %}>{{ g }}</option>
+        {% endfor %}
+      </select>
+      <button class="btn btn-secondary btn-sm" type="submit">Qidirish</button>
+      {% if q or grade_filter %}<a href="{{ url_for('students') }}" class="btn btn-secondary btn-sm">✕</a>{% endif %}
+    </form>
+  </div>
+  <span style="font-size:13px; color:var(--text-muted);">{{ students|length }} ta o'quvchi</span>
 </div>
+
 <div class="card">
   <div class="table-wrap">
     <table>
@@ -17,38 +33,51 @@
         <tr>
           <th>#</th>
           <th>F.I.Sh.</th>
-          <th>ID raqam</th>
+          <th>ID</th>
           <th>Sinf</th>
+          <th>Jinsi</th>
           <th>Telefon</th>
-          <th>Faol kitoblar</th>
+          <th>Ota-ona</th>
+          <th>Faol kitob</th>
           <th>Amallar</th>
         </tr>
       </thead>
       <tbody>
         {% for s in students %}
         <tr>
-          <td style="color:#64748b;">{{ loop.index }}</td>
-          <td><strong>{{ s.full_name }}</strong></td>
-          <td><code style="background:#f1f5f9; padding:2px 6px; border-radius:4px; font-size:12px;">{{ s.student_id }}</code></td>
-          <td>{{ s.grade }}</td>
-          <td>{{ s.phone or '—' }}</td>
+          <td style="color:var(--text-muted);">{{ loop.index }}</td>
           <td>
-            {% set active = s.borrows|selectattr('status','equalto','borrowed')|list|length %}
-            {% if active > 0 %}
+            <a href="{{ url_for('student_detail', id=s.id) }}" style="color:var(--text); font-weight:600; text-decoration:none;">{{ s.full_name }}</a>
+            {% if s.email %}<div style="font-size:11px; color:var(--text-muted);">{{ s.email }}</div>{% endif %}
+          </td>
+          <td><code style="background:#f1f5f9; padding:2px 6px; border-radius:4px; font-size:11px;">{{ s.student_id }}</code></td>
+          <td><span class="badge badge-secondary">{{ s.grade }}</span></td>
+          <td style="font-size:12px; color:var(--text-muted);">
+            {% if s.gender == 'erkak' %}♂ Erkak{% elif s.gender == 'ayol' %}♀ Ayol{% else %}—{% endif %}
+          </td>
+          <td style="font-size:12px;">{{ s.phone or '—' }}</td>
+          <td style="font-size:12px; color:var(--text-muted);">{{ s.parent_name or '—' }}</td>
+          <td>
+            {% set active = s.active_borrows|length %}
+            {% set overdue = s.overdue_borrows|length %}
+            {% if overdue > 0 %}
+              <span class="badge badge-danger">{{ active }} ta ({{ overdue }} kechikkan)</span>
+            {% elif active > 0 %}
               <span class="badge badge-warning">{{ active }} ta</span>
             {% else %}
               <span class="badge badge-success">0</span>
             {% endif %}
           </td>
-          <td>
-            <a href="{{ url_for('edit_student', id=s.id) }}" class="btn btn-secondary btn-sm">Tahrirlash</a>
-            <form method="POST" action="{{ url_for('delete_student', id=s.id) }}" style="display:inline;" onsubmit="return confirm('O\'chirmoqchimisiz?')">
+          <td style="white-space:nowrap;">
+            <a href="{{ url_for('student_detail', id=s.id) }}" class="btn btn-info btn-sm">Ko'rish</a>
+            <a href="{{ url_for('edit_student', id=s.id) }}" class="btn btn-secondary btn-sm">Tahrir</a>
+            <form method="POST" action="{{ url_for('delete_student', id=s.id) }}" style="display:inline;" onsubmit="return confirm('O\'quvchini o\'chirmoqchimisiz?')">
               <button class="btn btn-danger btn-sm" type="submit">O'chirish</button>
             </form>
           </td>
         </tr>
         {% else %}
-        <tr><td colspan="7" style="text-align:center; color:#64748b; padding:24px;">O'quvchi topilmadi</td></tr>
+        <tr><td colspan="9" style="text-align:center; color:var(--text-muted); padding:32px;">O'quvchi topilmadi</td></tr>
         {% endfor %}
       </tbody>
     </table>

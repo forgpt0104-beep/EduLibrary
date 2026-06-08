@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'Foydalanuvchi tahrirlash' if user else 'Yangi foydalanuvchi' }} - EduLibrary{% endblock %}
+{% block page_title %}{{ 'Foydalanuvchi tahrirlash' if user else 'Yangi foydalanuvchi qo\'shish' }}{% endblock %}
+{% block content %}
+<div class="card" style="max-width:560px;">
+  <form method="POST">
+    <div class="form-grid">
+      {% if not user %}
+      <div class="form-group">
+        <label>Username *</label>
+        <input class="form-control" type="text" name="username" placeholder="username" required>
+      </div>
+      <div class="form-group">
+        <label>Parol *</label>
+        <input class="form-control" type="password" name="password" placeholder="Kamida 6 ta belgi" required minlength="6">
+      </div>
+      {% endif %}
+      <div class="form-group" {% if not user %}style="grid-column:1/-1;"{% endif %}>
+        <label>To'liq ism</label>
+        <input class="form-control" type="text" name="full_name" value="{{ user.full_name if user else '' }}" placeholder="Ism familiya">
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <input class="form-control" type="email" name="email" value="{{ user.email if user else '' }}" placeholder="email@example.com">
+      </div>
+      <div class="form-group">
+        <label>Telefon</label>
+        <input class="form-control" type="text" name="phone" value="{{ user.phone if user else '' }}" placeholder="+998901234567">
+      </div>
+      <div class="form-group">
+        <label>Rol</label>
+        <select class="form-control" name="role">
+          <option value="librarian" {% if user and user.role == 'librarian' %}selected{% endif %}>Kutubxonachi</option>
+          <option value="admin" {% if user and user.role == 'admin' %}selected{% endif %}>Admin</option>
+        </select>
+      </div>
+      {% if user %}
+      <div class="form-group" style="display:flex; align-items:center; gap:8px; padding-top:24px;">
+        <input type="checkbox" name="is_active" id="is_active" {% if user.is_active %}checked{% endif %} style="width:16px; height:16px;">
+        <label for="is_active" style="margin:0; font-size:13px;">Faol (tizimga kira oladi)</label>
+      </div>
+      {% endif %}
+    </div>
+    {% if user %}
+    <div style="margin:16px 0; padding:14px; background:var(--bg); border-radius:8px; border:1px solid var(--border);">
+      <div style="font-size:12px; font-weight:600; color:var(--text-muted); margin-bottom:10px; text-transform:uppercase;">Parolni o'zgartirish (ixtiyoriy)</div>
+      <div class="form-grid">
+        <div class="form-group" style="margin:0;">
+          <label>Yangi parol</label>
+          <input class="form-control" type="password" name="new_password" placeholder="Bo'sh qoldiring — o'zgarmaydi" minlength="6">
+        </div>
+      </div>
+    </div>
+    {% endif %}
+    <div style="display:flex; gap:10px; margin-top:8px;">
+      <button class="btn btn-primary" type="submit">{{ 'Saqlash' if user else "Qo'shish" }}</button>
+      <a href="{{ url_for('users') }}" class="btn btn-secondary">Bekor qilish</a>
+    </div>
+  </form>
+</div>
+{% endblock %}
