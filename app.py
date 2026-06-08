@@ -32,13 +32,6 @@ login_manager.login_message = 'Iltimos, tizimga kiring!'
 
 FINE_PER_DAY = 1000  # so'm per overdue day
 
-@app.route("/debug")
-def debug():
-    try:
-        return "Database connected successfully!"
-    except Exception as e:
-        return str(e)
-
 # ───────────────────────────── MODELS ─────────────────────────────
 
 class User(UserMixin, db.Model):
