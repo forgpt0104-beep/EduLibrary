@@ -11,7 +11,9 @@ import os
 app = Flask(__name__)
 
 app.config['SECRET_KEY'] = 'edulibrary-secret-key-2026'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///edulibrary.db'
+_db_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'instance', 'edulibrary.db')
+os.makedirs(os.path.dirname(_db_path), exist_ok=True)
+app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{_db_path}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
@@ -859,7 +861,10 @@ def init_db():
             db.session.add_all(sample_students)
             db.session.flush()  # get IDs
 
-        db.session.commit()
+        try:
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
 
 
 # ── Run migrations + seed data on every startup (works under gunicorn too) ──
