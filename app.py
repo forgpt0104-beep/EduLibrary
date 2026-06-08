@@ -9,6 +9,7 @@ import io
 import os
 
 app = Flask(__name__)
+
 app.config['SECRET_KEY'] = 'edulibrary-secret-key-2026'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///edulibrary.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -693,11 +694,59 @@ def export_books():
     )
 
 
+# ───────────────────────────── MIGRATE DB ─────────────────────────────
+
+def migrate_db():
+    """Safely add any missing columns to existing tables (for deployed DB upgrades)."""
+    from sqlalchemy import inspect, text
+
+    with app.app_context():
+        inspector = inspect(db.engine)
+        existing_tables = inspector.get_table_names()
+
+        def add_col_if_missing(table, col, col_type):
+            if table not in existing_tables:
+                return
+            cols = [c['name'] for c in inspector.get_columns(table)]
+            if col not in cols:
+                with db.engine.connect() as conn:
+                    conn.execute(text(f'ALTER TABLE "{table}" ADD COLUMN {col} {col_type}'))
+                    conn.commit()
+
+        # ── student ──
+        add_col_if_missing('student', 'gender',       'VARCHAR(10)')
+        add_col_if_missing('student', 'email',        'VARCHAR(120)')
+        add_col_if_missing('student', 'date_of_birth','DATE')
+        add_col_if_missing('student', 'address',      'VARCHAR(250)')
+        add_col_if_missing('student', 'parent_name',  'VARCHAR(150)')
+        add_col_if_missing('student', 'parent_phone', 'VARCHAR(20)')
+        add_col_if_missing('student', 'notes',        'TEXT')
+
+        # ── user ──
+        add_col_if_missing('user', 'full_name',  'VARCHAR(150)')
+        add_col_if_missing('user', 'email',      'VARCHAR(120)')
+        add_col_if_missing('user', 'phone',      'VARCHAR(20)')
+        add_col_if_missing('user', 'is_active',  'BOOLEAN DEFAULT 1')
+        add_col_if_missing('user', 'last_login', 'DATETIME')
+        add_col_if_missing('user', 'created_at', 'DATETIME')
+
+        # ── book ──
+        add_col_if_missing('book', 'description',    'TEXT')
+        add_col_if_missing('book', 'publisher',      'VARCHAR(150)')
+        add_col_if_missing('book', 'year',           'INTEGER')
+        add_col_if_missing('book', 'language',       'VARCHAR(50)')
+        add_col_if_missing('book', 'shelf_location', 'VARCHAR(50)')
+
+        # ── borrow ──
+        add_col_if_missing('borrow', 'notes', 'VARCHAR(250)')
+
+
 # ───────────────────────────── INIT DB ─────────────────────────────
 
 def init_db():
     with app.app_context():
         db.create_all()
+        migrate_db()
 
         if not User.query.filter_by(username='admin').first():
             admin = User(username='admin', role='admin', full_name='Bosh Administrator',
@@ -801,6 +850,10 @@ def init_db():
         db.session.commit()
 
 
+# ── Run migrations + seed data on every startup (works under gunicorn too) ──
+init_db()
+
 if __name__ == '__main__':
-    init_db()
-    app.run(debug=True, port=5000)
+    port = int(os.environ.get('PORT', 5000))
+    debug = os.environ.get('FLASK_DEBUG', 'true').lower() == 'true'
+    app.run(host='0.0.0.0', port=port, debug=debug)
